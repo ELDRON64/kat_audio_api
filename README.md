@@ -24,13 +24,13 @@ kat_audio interface;
 to load a file in the interface you can call:
 
 ```cpp – C++
-interface.load ( "<file_name>" );
+interface.load ( "<file_name>.xdg" );
 ```
 
 to save the file you can call:
 
 ```cpp – C++
-interface.save ( "<file_name>", (bool) <forze_save> );
+interface.save ( "<file_name>.xdg", (bool) <forze_save> );
 ```
 
 to display you can call:
@@ -39,6 +39,18 @@ to display you can call:
 #include <iostream>
 
 std::cout << interface;
+```
+
+to export to wav you can use:
+
+```cpp – C++
+interface.export_wav ( "<file_name>.wav", (bool) <forze_save> );
+```
+
+to regenerate the exported audio you can use:
+
+```cpp – C++
+interface.generate_audio ( );
 ```
 
 to get/set the infos for the data stored you can call:
