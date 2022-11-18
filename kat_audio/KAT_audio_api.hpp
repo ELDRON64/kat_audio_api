@@ -24,11 +24,13 @@ public:
 };
 
 int kat_audio::generate_audio ( ) {
-    generated_audio = Isinfxx (current_state.get_all_frequ(),
-                               current_state.get_all_inten(),
-                               current_state.get_all_lenth(),
-                               current_state.get_bpm(),
-                               current_state.get_sampl());
+    generated_audio = Isinfxx (get_all_frequ ( ),
+                               get_all_inten ( ),
+                               get_all_lenth ( ),
+                               get_lenth ( ),
+                               get_bpm ( ),
+                               get_sampl ( ));
+    std::cout<< "lenth_F: " << get_lenth() << std::endl;
     return 0;
 }
 
@@ -37,7 +39,7 @@ int kat_audio::export_wav ( std::string audio_path, bool forze ) {
 
     if (generated_audio.empty()) { if ( generate_audio () != 0 ) { return 2; } }
 
-    return save_wav ( generated_audio, audio_path, sample_rate );
+    return save_wav ( generated_audio, audio_path, current_state.get_sampl ( ) );
 }
 
 #endif

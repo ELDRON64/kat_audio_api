@@ -4,7 +4,8 @@
 #include <iostream>
 
 double F_period ( double x ) {
-    return ((sin( x ) + 2* sin ( 2*x )) / 3) ;
+    // return ((sin( x ) + 2* sin ( 2*x )) / 3) ;
+    return sin(x);
 }
 
 std::vector < double > get_sample ( size_t duration, double Freq, double Inte, size_t crescita ) {
@@ -26,15 +27,24 @@ std::vector < double > get_sample ( size_t duration, double Freq, double Inte, s
     return samples;   
 }
 
-std::vector <double> Isinfxx ( std::vector <short> Frequenze,
-                               std::vector <unsigned short> Intensita,
-                               std::vector <unsigned short> Lunghezze,
+std::vector <double> Isinfxx ( short *Frequenze,
+                               unsigned short *Intensita,
+                               unsigned short *Lunghezze,
+                               size_t lenth_f,
                                double bpm = 120, int sample_rate = 44100 ) 
 {
     std::vector <double> Samples;
+    std::cout << "#### generating samples\n";
+    std::cout << "     bpm: " << bpm << std::endl;
+    std::cout << "     smp: " << sample_rate << std::endl;
+
+    std::cout << "     Fn: " << lenth_f << std::endl;
+    std::cout << "     Ln: " << lenth_f << std::endl;
+    std::cout << "     In: " << lenth_f*2-1 << std::endl;
+
     // somma delle Lungezze * sample rate
     size_t lungezza_totale_note = 0;
-    for ( short l : Lunghezze ) { lungezza_totale_note += l; }
+    for ( size_t i = 0; i < lenth_f*2-1; i++ ) { lungezza_totale_note += Lunghezze[i]; }
 
     // nota lungezza 1/4 (16) = 1 bpm
     size_t sample_x_beat = ( ( sample_rate * 60 ) / bpm ) / 16; 
@@ -42,15 +52,16 @@ std::vector <double> Isinfxx ( std::vector <short> Frequenze,
 
     // trovo i sample per L
     std::vector <size_t> sample_per_L;
-    for ( unsigned short L : Lunghezze ) {
-        sample_per_L.push_back ( (size_t) L * sample_x_beat );
+    for ( size_t i = 0; i < lenth_f*2-1; i++ ) {
+        std::cout << "Lt_: "<< (size_t) Lunghezze[i] * sample_x_beat << " " << Lunghezze[i] << "\n";
+        sample_per_L.push_back ( (size_t) Lunghezze[i] * sample_x_beat );
     }
 
     // normalizzo frequenze
     std::vector <double> Frequenze_M;
-    for ( short F : Frequenze ) {
-        //std::cout << "Ft_: "<< pow ( 2, (double)F / 12.0 ) << " " << F << "\n";
-        Frequenze_M.push_back ( 440.0 * pow ( 2, (double)F / 12.0 ));
+    for ( size_t i = 0; i < lenth_f; i++ ) {
+        std::cout << "Ft_: "<< pow ( 2, (double)Frequenze[i] / 12.0 ) << " " << Frequenze[i] << "\n";
+        Frequenze_M.push_back ( 440.0 * pow ( 2, (double)Frequenze[i] / 12.0 ));
     }
 
     std::vector <double> Frequenze_N;
@@ -60,9 +71,9 @@ std::vector <double> Isinfxx ( std::vector <short> Frequenze,
 
     // normalizzo intesinta
     std::vector <double> Intensita_M;
-    for ( unsigned short I : Intensita ) {
-        //std::cout << "Ft_: "<< pow ( 2, (double)F / 12.0 ) << " " << F << "\n";
-        Intensita_M.push_back ( (double) I / 65536);
+    for ( size_t i = 0; i < lenth_f; i++ ) {
+        std::cout << "It_: "<< (double) Intensita[i] / 65536 << " " << Intensita[i] << "\n";
+        Intensita_M.push_back ( (double) Intensita[i] / 65536);
     }
 
     // print 

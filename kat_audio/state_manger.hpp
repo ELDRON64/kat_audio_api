@@ -10,8 +10,7 @@ using std::filesystem::exists;
 
 class STATE
 {
-private:    
-public:
+private:  
     std::string file_path;
 
     size_t sample_rate;
@@ -19,9 +18,10 @@ public:
     size_t Lenth_F;
 
     // std::string frase;
-    std::vector <short>          Frequenze;
-    std::vector <unsigned short> Intensita;
-    std::vector <unsigned short> Lunghezze;
+    short          *Frequenze;
+    unsigned short *Intensita;
+    unsigned short *Lunghezze;  
+public:
      STATE ( );
      STATE ( std::string file_path, size_t dimension = 1 );
     ~STATE ( );
@@ -48,9 +48,9 @@ public:
     short set_frlen ( uint frame, short value );        
     // char* set_chars ( char* caracters );
 
-    std::vector < short > get_all_frequ ();
-    std::vector < unsigned short > get_all_inten ();
-    std::vector < unsigned short > get_all_lenth ();
+    short          *get_all_frequ ();
+    unsigned short *get_all_inten ();
+    unsigned short *get_all_lenth ();
 
     void add_frame ( );
     void add_frame ( short, unsigned short, 
@@ -73,6 +73,9 @@ STATE::STATE () {
     sample_rate = 44100;
     bpm = 120.0;
     resize_buff(1);
+    set_frequ(0,0);
+    set_frlen(0,0);
+    set_inten(0,0);
 }
 
 STATE::STATE ( std::string file_path, size_t dimension ) {
@@ -92,9 +95,9 @@ STATE::~STATE () {
 
 int STATE::resize_buff ( size_t dimension ) {
     Lenth_F = dimension;
-    Frequenze.reserve (Lenth_F);
-    Intensita.reserve (Lenth_F);
-    Lunghezze.reserve (Lenth_F*2-1);
+    Frequenze = (short*) malloc (Lenth_F);
+    Intensita = (unsigned short*) malloc (Lenth_F);
+    Lunghezze = (unsigned short*) malloc (Lenth_F*2-1);
     return 0;
 }
 
@@ -179,20 +182,21 @@ int STATE::save ( std::string path , bool forze ) {
 
     file << "\n";
 
-    for ( short freq : Frequenze ) { 
-        char* f = (char*) & freq;
+    for ( size_t i = 0; i < Lenth_F; i++ ) {
+        char* f = (char*) & Frequenze[i];
         for (char i = 0; i < 2; i++) { file.put(f[i]); }
     }
+
     file << "\n";
 
-    for ( unsigned short inte : Intensita ) {
-        char* f = (char*) & inte;
+    for ( size_t i = 0; i < Lenth_F; i++ ) {
+        char* f = (char*) & Intensita[i];
         for (char i = 0; i < 2; i++) { file.put(f[i]); } 
     }
     file << "\n";
 
-    for ( unsigned short lent : Lunghezze ) {
-        char* f = (char*) & lent;
+    for ( size_t i = 0; i < Lenth_F*2-1; i++ ) {
+        char* f = (char*) & Lunghezze[i];
         for (char i = 0; i < 2; i++) { file.put(f[i]); }
     }
 
@@ -239,25 +243,24 @@ short STATE::set_frlen ( uint frame, short value ) {
     return Lunghezze [frame];
 }
 
-std::vector < short > STATE::get_all_frequ () { return Frequenze; }
-std::vector < unsigned short > STATE::get_all_inten () { return Intensita; }
-std::vector < unsigned short > STATE::get_all_lenth () { return Lunghezze; }
+short          *STATE::get_all_frequ () { return Frequenze; }
+unsigned short *STATE::get_all_inten () { return Intensita; }
+unsigned short *STATE::get_all_lenth () { return Lunghezze; }
 
 std::ostream& operator << (std::ostream& os, STATE& p) {
     os << "\tvalues:" << std::endl;
-    os << "\t\t" << p.get_bpm() << std::endl;
-    os << "\t\t" << p.get_sampl() << std::endl;
-    os << "\t\t" << p.get_lenth() << std::endl;
+    os << "\tbpm: " << p.get_bpm() << std::endl;
+    os << "\tsmp: " << p.get_sampl() << std::endl;
+    os << "\tlen: " << p.get_lenth() << std::endl;
 
     os << std::endl;
     for (short i = 0; i < p.get_lenth(); i++)
     {
-        os << "\tp values " << i << std::endl;
-        os << "\t\tF:" << p.get_frequ ( i );
-        os << "\t\tI:" << p.get_inten ( i );
-        os << "\t\tL1:" << p.get_frlen ( i*2 );
+        os << "\tF: " << p.get_frequ ( i );
+        os << "\tI: " << p.get_inten ( i );
+        os << "\tL1:" << p.get_frlen ( i*2 );
         if ( i+1 < p.get_lenth()) 
-        { os << "\t\tL2:" << p.get_frlen ( i*2+1 ); }
+        { os << "\tL2:" << p.get_frlen ( i*2+1 ); }
         os << std::endl;
     }
     return os;

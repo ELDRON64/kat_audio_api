@@ -15,9 +15,9 @@ int save_wav ( std::vector<double> data, std::string path, int sample_rate = 441
     for (size_t i = 0; i < data.size ( ); i++) { buffer [0][i] = data [i]; }
     
     // copy buffer
-    if (audioFile.setAudioBuffer (buffer)) { std::cerr << "CP_ERROR"; return 1; }
+    if ( !audioFile.setAudioBuffer (buffer)) { std::cerr << "COPY_BUFFER_ERROR"; return 1; }
     // save buffer
-    if (audioFile.save ( path )) { std::cerr << "SAVE_ERROR"; return 1;}
+    if ( !audioFile.save ( path )) { std::cerr << "SAVE_ERROR"; return 1;}
 
     return 0;
 }
