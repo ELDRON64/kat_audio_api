@@ -30,7 +30,6 @@ int kat_audio::generate_audio ( ) {
                                get_lenth ( ),
                                get_bpm ( ),
                                get_sampl ( ));
-    std::cout<< "lenth_F: " << get_lenth() << std::endl;
     return 0;
 }
 
@@ -38,6 +37,8 @@ int kat_audio::export_wav ( std::string audio_path, bool forze ) {
     if ( !forze ) { if ( exists ( audio_path ) ) { return 3; } }
 
     if (generated_audio.empty()) { if ( generate_audio () != 0 ) { return 2; } }
+
+    std::cout << "exporting: " << audio_path << "\n"; 
 
     return save_wav ( generated_audio, audio_path, current_state.get_sampl ( ) );
 }

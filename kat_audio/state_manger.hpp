@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include <iostream>
 using std::filesystem::exists;
 
 // this module allows tho load and store the STATE of the kat audio
@@ -26,7 +27,7 @@ public:
      STATE ( std::string file_path, size_t dimension = 1 );
     ~STATE ( );
 
-    int resize_buff ( size_t dimension );
+    int resize_buff ( size_t dimension, bool set_up = false );
     int load ( std::string path = "");
     int save ( std::string path = "", bool forze = false );
 
@@ -63,19 +64,22 @@ void STATE::add_frame ( ) { resize_buff ( Lenth_F + 1 ); }
 void STATE::add_frame ( short F, unsigned short I, 
                        unsigned short P1, unsigned short L1 ) {
     resize_buff ( Lenth_F + 1 );
-    Frequenze[Lenth_F + 1] = F;
-    Intensita[Lenth_F + 1] = I;
-    Lunghezze[Lenth_F * 2 + 2] = P1;
-    Lunghezze[Lenth_F * 2 + 3] = L1;
+    set_frequ ( Lenth_F-1, F );
+    set_inten ( Lenth_F-1, I );
+    set_frlen ( (Lenth_F-1)*2, L1 );
+    set_frlen ( (Lenth_F-1)*2-1, P1 );
 }
 
 STATE::STATE () {
+    // std::cout << "CONSTUCTOR\n";
     sample_rate = 44100;
     bpm = 120.0;
-    resize_buff(1);
+    resize_buff(1,true);
+    // std::cout << "RESIZED " << Lenth_F << std::endl; 
     set_frequ(0,0);
     set_frlen(0,0);
     set_inten(0,0);
+    // std::cout << "EMPTY\n";
 }
 
 STATE::STATE ( std::string file_path, size_t dimension ) {
@@ -93,11 +97,38 @@ STATE::~STATE () {
 
 }
 
-int STATE::resize_buff ( size_t dimension ) {
+int STATE::resize_buff ( size_t dimension, bool set_up ) {
+    // std::cout << "START_RESIZE: " << dimension << " MODE: " << (set_up?"set_up":"resize")<< "\n";
+    short          *Frequenze_1;
+    unsigned short *Intensita_1;
+    unsigned short *Lunghezze_1;
+
+    Frequenze_1 = (short*) malloc (dimension);
+    Intensita_1 = (unsigned short*) malloc (dimension);
+    Lunghezze_1 = (unsigned short*) malloc (dimension*2-1);
+    // std::cout << "MALLOC\n";
+
+    if ( set_up ) { goto end; }
+
+    if ( Lenth_F > dimension ) { Lenth_F = dimension; }
+
+    for (size_t i = 0; i < Lenth_F; i++) {
+        Frequenze_1[i] = Frequenze[i];
+        Intensita_1[i] = Intensita[i];
+        Lunghezze_1[i*2] = Lunghezze[i*2];
+        Lunghezze_1[i*2+1] = Lunghezze[i*2+1];
+    }
+    free (Frequenze);
+    free (Intensita);
+    free (Lunghezze);
+
+    end:
     Lenth_F = dimension;
-    Frequenze = (short*) malloc (Lenth_F);
-    Intensita = (unsigned short*) malloc (Lenth_F);
-    Lunghezze = (unsigned short*) malloc (Lenth_F*2-1);
+
+    Frequenze = Frequenze_1;
+    Intensita = Intensita_1;
+    Lunghezze = Lunghezze_1;
+    
     return 0;
 }
 
@@ -118,8 +149,9 @@ int STATE::load ( std::string path ) {
     file.ignore ();
     file.read ((char*) & sample_rate, 8);
     file.ignore ();
-
-    resize_buff ( Lenth_F );
+    std::cout << "get_basic\n";
+    resize_buff ( Lenth_F,true );
+    std::cout << "set_buff\n";
 
     char* F = (char*) malloc (Lenth_F * 2);
     file.read( F, Lenth_F*2 );
