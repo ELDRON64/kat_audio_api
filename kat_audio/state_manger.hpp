@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <iostream>
 #include <math.h>
+#include <stdexcept>
 using std::filesystem::exists;
 
 // this module allows tho load and store the STATE of the kat audio
@@ -36,7 +37,6 @@ public:
     size_t get_sampl ( );
     double get_bpm ( );
 
-    size_t set_lenth ( size_t lenth );
     size_t set_sampl ( size_t sample_rate );
     double set_bpm ( double bpm );
 
@@ -58,18 +58,20 @@ public:
     void add_frame ( short, unsigned short, 
                     unsigned short, unsigned short );
     
-    void frame ( size_t, short, unsigned short, 
+    int frame ( size_t, short, unsigned short, 
                 unsigned short, unsigned short );
 
     friend std::ostream& operator << (std::ostream& os, const STATE& dt);
 };
 
-void STATE::frame ( size_t P, short F, unsigned short I, 
+int STATE::frame ( size_t P, short F, unsigned short I, 
              unsigned short P1, unsigned short L1 ) {
+    if ( P >= Lenth_F ) { throw std::invalid_argument ("value out of borders"); return 1; }
     set_frequ ( P, F );
     set_inten ( P, I );
     set_frlen ( (P)*2, L1 );
     set_frlen ( (P)*2+1, P1 );
+    return 0;
 }
 
 void STATE::add_frame ( ) { resize_buff ( Lenth_F + 1 ); }
@@ -246,10 +248,6 @@ size_t STATE::get_lenth ( ) { return Lenth_F; }
 size_t STATE::get_sampl ( ) { return sample_rate; }
 double STATE::get_bpm   ( ) { return bpm; }
 
-size_t STATE::set_lenth ( size_t lenth ) {
-    Lenth_F = lenth;
-    return Lenth_F;
-}
 size_t STATE::set_sampl ( size_t sample_rate ) {
     this->sample_rate = sample_rate;
     return this->sample_rate;
