@@ -34,14 +34,14 @@ std::vector <double> Isinfxx ( short *Frequenze,
                                double bpm = 120, int sample_rate = 44100 ) 
 {
     std::vector <double> Samples;
-    std::cout << "#### generating samples\n";
-    std::cout << "     bpm: " << bpm << std::endl;
-    std::cout << "     smp: " << sample_rate << std::endl;
+    // std::cout << "#### generating samples\n";
+    // std::cout << "     bpm: " << bpm << std::endl;
+    // std::cout << "     smp: " << sample_rate << std::endl;
 
-    std::cout << "     Fn: " << lenth_f << std::endl;
-    std::cout << "     In: " << lenth_f << std::endl;
-    std::cout << "     Ln: " << lenth_f*2-1 << std::endl;
-    std::cout << "\n";
+    // std::cout << "     Fn: " << lenth_f << std::endl;
+    // std::cout << "     In: " << lenth_f << std::endl;
+    // std::cout << "     Ln: " << lenth_f*2-1 << std::endl;
+    // std::cout << "\n";
 
     // somma delle Lungezze * sample rate
     size_t lungezza_totale_note = 0;
@@ -52,22 +52,22 @@ std::vector <double> Isinfxx ( short *Frequenze,
     // size_t sample_totali = sample_x_beat * lungezza_totale_note;
 
     // trovo i sample per L
-    size_t *sample_per_L = (size_t*) malloc ((lenth_f*2-1)*8);
-    for ( size_t i = 0; i < lenth_f*2-1; i++ ) {
-        std::cout << "Lt_: "<< (size_t) Lunghezze[i] * sample_x_beat << " " << Lunghezze[i] << "\n";
+    size_t *sample_per_L = (size_t*) calloc (lenth_f*2, sizeof(size_t));
+    for ( size_t i = 0; i < lenth_f*2; i++ ) {
+        // std::cout << "Lt_: "<< (size_t) Lunghezze[i] * sample_x_beat << " " << Lunghezze[i] << "\n";
         sample_per_L[i] = ( (size_t) Lunghezze[i] * sample_x_beat );
     }
-    std::cout << "\n";
+    // std::cout << "\n";
 
     // normalizzo frequenze
-    double *Frequenze_M = (double*) malloc ((lenth_f)*8);
+    double *Frequenze_M = (double*) calloc (lenth_f, sizeof(double));
     for ( size_t i = 0; i < lenth_f; i++ ) {
-        std::cout << "Ft_: "<< 440 * pow ( 2, ((double)Frequenze[i]) / 12.0 ) << " " << Frequenze[i] << "\n";
+        // std::cout << "Ft_: "<< 440 * pow ( 2, ((double)Frequenze[i]) / 12.0 ) << " " << Frequenze[i] << "\n";
         Frequenze_M [i] = ( 440.0 * pow ( 2, ((double)Frequenze[i]) / 12.0 ));
     }
-    std::cout << "\n";
+    // std::cout << "\n";
 
-    double *Frequenze_N = (double*) malloc ((lenth_f)*8);
+    double *Frequenze_N = (double*) calloc (lenth_f, sizeof(double));
     for ( size_t i = 0; i < lenth_f; i++ ) {
         Frequenze_N [i] = ( Frequenze_M[i] * 2 * M_PI / sample_rate );
     }
@@ -75,32 +75,32 @@ std::vector <double> Isinfxx ( short *Frequenze,
     // normalizzo intesinta
     std::vector <double> Intensita_M;
     for ( size_t i = 0; i < lenth_f; i++ ) {
-        std::cout << "It_: "<< (double) Intensita[i] / 65536 << " " << Intensita[i] << "\n";
+        // std::cout << "It_: "<< (double) Intensita[i] / 65536 << " " << Intensita[i] << "\n";
         Intensita_M.push_back ( (double) Intensita[i] / 65536);
     }
-    std::cout << "\n";
+    // std::cout << "\n";
 
     // print 
     // for ( auto F : Frequenze_M )  { std::cout << "F: " << F << "\n";}
     // for ( auto L : sample_per_L ) { std::cout << "L: " << L << "\n";}
     // for ( auto I : Intensita_M )    { std::cout << "I: " << I << "\n";}
-    std::cout << "generating samples\n";
+    // std::cout << "generating samples\n";
     size_t comulative_x = 0;
     for (size_t i = 0; i < lenth_f*2-1; i++)
     {
-        std::cout << "generating sample: "<< i+1 << std::endl;
+        // std::cout << "generating sample: "<< i+1 << std::endl;
         size_t current_L = sample_per_L[i];
         
         if ( (i + 1) % 2 == 0) {
-            std::cout << "\tgenerating pause: "<< i+1 << std::endl;
+            // std::cout << "\tgenerating pause: "<< i+1 << std::endl;
 
             for (size_t x = 0; x < current_L; x++) {
                 Samples.push_back ( 0 );
             }
         } else {    
-            std::cout << "\tgenerating sample: "<< i+1 << std::endl;
+            // std::cout << "\tgenerating sample: "<< i+1 << std::endl;
 
-            std::vector <double> sample_L = get_sample ( current_L, Frequenze_N[i/2],Intensita_M[i/2], (size_t)current_L / 4 );
+            std::vector <double> sample_L = get_sample ( current_L, Frequenze_N[i/2],Intensita_M[i/2], (size_t)sample_per_L[0] / 8 );
             Samples.insert(Samples.end(), sample_L.begin(), sample_L.end());
         }
         comulative_x += current_L;

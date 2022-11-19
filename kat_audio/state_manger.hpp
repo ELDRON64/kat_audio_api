@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <iostream>
+#include <math.h>
 using std::filesystem::exists;
 
 // this module allows tho load and store the STATE of the kat audio
@@ -18,10 +19,10 @@ private:
     double bpm;
     size_t Lenth_F;
 
-    // std::string frase;
     short          *Frequenze;
     unsigned short *Intensita;
     unsigned short *Lunghezze;  
+
 public:
      STATE ( );
      STATE ( std::string file_path, size_t dimension = 1 );
@@ -56,9 +57,20 @@ public:
     void add_frame ( );
     void add_frame ( short, unsigned short, 
                     unsigned short, unsigned short );
+    
+    void frame ( size_t, short, unsigned short, 
+                unsigned short, unsigned short );
 
     friend std::ostream& operator << (std::ostream& os, const STATE& dt);
 };
+
+void STATE::frame ( size_t P, short F, unsigned short I, 
+             unsigned short P1, unsigned short L1 ) {
+    set_frequ ( P, F );
+    set_inten ( P, I );
+    set_frlen ( (P)*2, L1 );
+    set_frlen ( (P)*2+1, P1 );
+}
 
 void STATE::add_frame ( ) { resize_buff ( Lenth_F + 1 ); }
 void STATE::add_frame ( short F, unsigned short I, 
@@ -67,25 +79,20 @@ void STATE::add_frame ( short F, unsigned short I,
     set_frequ ( Lenth_F-1, F );
     set_inten ( Lenth_F-1, I );
     set_frlen ( (Lenth_F-1)*2, L1 );
-    set_frlen ( (Lenth_F-1)*2-1, P1 );
+    set_frlen ( (Lenth_F-1)*2+1, P1 );
 }
 
 STATE::STATE () {
     // std::cout << "CONSTUCTOR\n";
     sample_rate = 44100;
     bpm = 120.0;
-    resize_buff(1,true);
-    // std::cout << "RESIZED " << Lenth_F << std::endl; 
-    set_frequ(0,0);
-    set_frlen(0,0);
-    set_inten(0,0);
-    // std::cout << "EMPTY\n";
+    resize_buff(0,true);
 }
 
 STATE::STATE ( std::string file_path, size_t dimension ) {
     sample_rate = 44100;
     bpm = 120.0;
-    resize_buff (dimension);
+    resize_buff (dimension,true);
 
     this->file_path = file_path;
     if ( exists ( file_path ) ) {
@@ -99,36 +106,37 @@ STATE::~STATE () {
 
 int STATE::resize_buff ( size_t dimension, bool set_up ) {
     // std::cout << "START_RESIZE: " << dimension << " MODE: " << (set_up?"set_up":"resize")<< "\n";
-    short          *Frequenze_1;
-    unsigned short *Intensita_1;
-    unsigned short *Lunghezze_1;
+    size_t old_lenth = Lenth_F;
+    Lenth_F = (dimension);
+    if ( Lenth_F == old_lenth ) { return 0; }
 
-    Frequenze_1 = (short*) malloc (dimension);
-    Intensita_1 = (unsigned short*) malloc (dimension);
-    Lunghezze_1 = (unsigned short*) malloc (dimension*2-1);
-    // std::cout << "MALLOC\n";
-
-    if ( set_up ) { goto end; }
-
-    if ( Lenth_F > dimension ) { Lenth_F = dimension; }
-
-    for (size_t i = 0; i < Lenth_F; i++) {
-        Frequenze_1[i] = Frequenze[i];
-        Intensita_1[i] = Intensita[i];
-        Lunghezze_1[i*2] = Lunghezze[i*2];
-        Lunghezze_1[i*2+1] = Lunghezze[i*2+1];
-    }
-    free (Frequenze);
-    free (Intensita);
-    free (Lunghezze);
-
-    end:
-    Lenth_F = dimension;
-
-    Frequenze = Frequenze_1;
-    Intensita = Intensita_1;
-    Lunghezze = Lunghezze_1;
+    // std::cout << "reallocating: " << Lenth_F << "\n";
     
+    if ( set_up ) {
+        Frequenze = (short*) calloc (Lenth_F, sizeof(short));
+        Intensita = (unsigned short*) calloc (Lenth_F,sizeof(unsigned short));
+        Lunghezze = (unsigned short*) calloc (Lenth_F*2,sizeof(unsigned short));
+
+        for (size_t i = 0; i < Lenth_F; i++) {
+            Frequenze[i] = 0;
+            Intensita[i] = 0;
+            Lunghezze[i*2] = 0;
+            Lunghezze[i*2+1] = 0;
+        }
+    } else {
+        Frequenze = (short*) realloc (Frequenze, Lenth_F * 2);
+        Intensita = (unsigned short*) realloc (Intensita, Lenth_F * 2);
+        Lunghezze = (unsigned short*) realloc (Lunghezze, Lenth_F * 4);
+        
+        for (size_t i = old_lenth; i < Lenth_F; i++) {
+            Frequenze[i] = 0;
+            Intensita[i] = 0;
+            Lunghezze[i*2] = 0;
+            Lunghezze[i*2+1] = 0;
+        }   
+    }
+
+    // std::cout << "MALLOC\n";
     return 0;
 }
 
@@ -179,7 +187,7 @@ int STATE::load ( std::string path ) {
 
     char* L = (char*) malloc (Lenth_F * 4 - 2);
     file.read( L, Lenth_F*4 -2 );
-    for (size_t i = 0; i < Lenth_F*2-1; i++) {
+    for (size_t i = 0; i < Lenth_F*2; i++) {
         short t = 0;
         char* t1 = (char*) & t;
         t1[0] = L[i*2];
@@ -190,7 +198,6 @@ int STATE::load ( std::string path ) {
 
     return 0;
 }
-
 int STATE::save ( std::string path , bool forze ) {
     if ( path != "" ) { file_path = path; }
     if ( file_path == "" ) { return -1; }
@@ -227,7 +234,7 @@ int STATE::save ( std::string path , bool forze ) {
     }
     file << "\n";
 
-    for ( size_t i = 0; i < Lenth_F*2-1; i++ ) {
+    for ( size_t i = 0; i < Lenth_F*2; i++ ) {
         char* f = (char*) & Lunghezze[i];
         for (char i = 0; i < 2; i++) { file.put(f[i]); }
     }
@@ -269,7 +276,7 @@ short STATE::set_inten ( uint frame, short value ) {
     return Intensita [frame];
 }
 short STATE::set_frlen ( uint frame, short value ) {
-    if ( frame + 1  > Lenth_F*2-1 ) { return -1; }
+    if ( frame + 1  > Lenth_F*2 ) { return -1; }
 
     Lunghezze [frame] = value;
     return Lunghezze [frame];
@@ -291,8 +298,7 @@ std::ostream& operator << (std::ostream& os, STATE& p) {
         os << "\tF: " << p.get_frequ ( i );
         os << "\tI: " << p.get_inten ( i );
         os << "\tL1:" << p.get_frlen ( i*2 );
-        if ( i+1 < p.get_lenth()) 
-        { os << "\tL2:" << p.get_frlen ( i*2+1 ); }
+        os << "\tL2:" << p.get_frlen ( i*2+1 );
         os << std::endl;
     }
     return os;

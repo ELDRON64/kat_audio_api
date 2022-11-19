@@ -38,7 +38,7 @@ int kat_audio::export_wav ( std::string audio_path, bool forze ) {
 
     if (generated_audio.empty()) { if ( generate_audio () != 0 ) { return 2; } }
 
-    std::cout << "exporting: " << audio_path << "\n"; 
+    // std::cout << "exporting: " << audio_path << "\n"; 
 
     return save_wav ( generated_audio, audio_path, current_state.get_sampl ( ) );
 }
