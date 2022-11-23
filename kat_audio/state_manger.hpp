@@ -23,6 +23,7 @@ private:
     short          *Frequenze;
     unsigned short *Intensita;
     unsigned short *Lunghezze;  
+    char           *Frase;
 
 public:
      STATE ( );
@@ -43,12 +44,12 @@ public:
     short get_frequ ( uint frame );
     short get_inten ( uint frame );
     short get_frlen ( uint frame );
-    // char* get_chars ( );
+    char* get_chars ( );
 
     short set_frequ ( uint frame, short value );
     short set_inten ( uint frame, short value );
     short set_frlen ( uint frame, short value );        
-    // char* set_chars ( char* caracters );
+    char* set_chars ( char* caracters );
 
     short          *get_all_frequ ();
     unsigned short *get_all_inten ();
@@ -60,8 +61,6 @@ public:
     
     int frame ( size_t, short, unsigned short, 
                 unsigned short, unsigned short );
-
-    friend std::ostream& operator << (std::ostream& os, const STATE& dt);
 };
 
 int STATE::frame ( size_t P, short F, unsigned short I, 
@@ -73,7 +72,6 @@ int STATE::frame ( size_t P, short F, unsigned short I,
     set_frlen ( (P)*2+1, P1 );
     return 0;
 }
-
 void STATE::add_frame ( ) { resize_buff ( Lenth_F + 1 ); }
 void STATE::add_frame ( short F, unsigned short I, 
                        unsigned short P1, unsigned short L1 ) {
@@ -90,7 +88,6 @@ STATE::STATE () {
     bpm = 120.0;
     resize_buff(0,true);
 }
-
 STATE::STATE ( std::string file_path, size_t dimension ) {
     sample_rate = 44100;
     bpm = 120.0;
@@ -101,9 +98,10 @@ STATE::STATE ( std::string file_path, size_t dimension ) {
         load ( ); 
     }
 }
-
 STATE::~STATE () {
-
+    free ( Frequenze );
+    free ( Intensita );
+    free ( Lunghezze );
 }
 
 int STATE::resize_buff ( size_t dimension, bool set_up ) {
@@ -159,9 +157,9 @@ int STATE::load ( std::string path ) {
     file.ignore ();
     file.read ((char*) & sample_rate, 8);
     file.ignore ();
-    std::cout << "get_basic\n";
+    // std::cout << "get_basic\n";
     resize_buff ( Lenth_F,true );
-    std::cout << "set_buff\n";
+    // std::cout << "set_buff\n";
 
     char* F = (char*) malloc (Lenth_F * 2);
     file.read( F, Lenth_F*2 );
