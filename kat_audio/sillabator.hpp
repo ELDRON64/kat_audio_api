@@ -162,6 +162,7 @@ public:
 
         _sillaba ( );
     }
+    sillabator ( ) { }
     /**
      * @brief Destroy the sillabator object
      * 
@@ -183,6 +184,13 @@ public:
      * @param frase 
      */
     void change_frase ( char* frase );
+    /**
+     * @brief change the frase and the lang
+     * 
+     * @param frase
+     * @param lang
+     */
+    void change_core ( char* frase, language lang );
 
     // get methods
     /**
@@ -308,6 +316,11 @@ void sillabator::change_lang  ( language lang ) {
 }
 void sillabator::change_frase ( char* frase ) {
     this->frase = frase;
+    _sillaba ( );
+}
+void sillabator::change_core  ( char* frase, language lang ) {
+    this->frase = frase;
+    this->current_lang = lang;
     _sillaba ( );
 }
 

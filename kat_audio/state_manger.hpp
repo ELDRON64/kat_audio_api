@@ -14,33 +14,99 @@ using std::filesystem::exists;
 class STATE
 {
 private:  
+    // the path of th file
     std::string file_path;
 
+    // file basic informations
     size_t sample_rate;
     double bpm;
     size_t Lenth_F;
 
+    // buffers
     short          *Frequenze;
     unsigned short *Intensita;
-    unsigned short *Lunghezze;  
+    unsigned short *Lunghezze;
     char           *Frase;
 
 public:
+    /**
+     * @brief Construct a new STATE object
+     * 
+     */
      STATE ( );
+    /**
+     * @brief Construct a new STATE object
+     * 
+     * @param file_path 
+     * @param dimension 
+     */
      STATE ( std::string file_path, size_t dimension = 1 );
+    /**
+     * @brief Destroy the STATE object
+     * 
+     */
     ~STATE ( );
 
+    /**
+     * @brief resize the vocals buffer
+     * 
+     * @param dimension 
+     * @param set_up 
+     * @return int 
+     */
     int resize_buff ( size_t dimension, bool set_up = false );
+
+    /**
+     * @brief load the buffers and basic infos from the specified file
+     * 
+     * @param path 
+     * @return int 
+     */
     int load ( std::string path = "");
+    /**
+     * @brief saves the buffers and basic infos in the specified file
+     * 
+     * @param path 
+     * @param forze if true : save even if the file exists
+     * @return int 
+     */
     int save ( std::string path = "", bool forze = false );
 
+    /**
+     * @brief Get the lenth
+     * 
+     * @return size_t 
+     */
     size_t get_lenth ( );
+    /**
+     * @brief Get the sample_rate
+     * 
+     * @return size_t 
+     */
     size_t get_sampl ( );
+    /**
+     * @brief Get the bpm 
+     * 
+     * @return double 
+     */
     double get_bpm ( );
 
+    /**
+     * @brief Set the sample_rate
+     * 
+     * @param sample_rate 
+     * @return size_t 
+     */
     size_t set_sampl ( size_t sample_rate );
+    /**
+     * @brief Set the bpm
+     * 
+     * @param bpm 
+     * @return double 
+     */
     double set_bpm ( double bpm );
 
+    // vaious get/set methods
     short get_frequ ( uint frame );
     short get_inten ( uint frame );
     short get_frlen ( uint frame );
@@ -55,10 +121,26 @@ public:
     unsigned short *get_all_inten ();
     unsigned short *get_all_lenth ();
 
+    /**
+     * @brief adds an empty frame
+     * 
+     */
     void add_frame ( );
+    /**
+     * @brief adds a frame with the specified parameters
+     * 
+     * @param short 
+     * @param short 
+     */
     void add_frame ( short, unsigned short, 
                     unsigned short, unsigned short );
-    
+    /**
+     * @brief modifyes a frame based on the given paramenters
+     * 
+     * @param short 
+     * @param short 
+     * @return int 
+     */
     int frame ( size_t, short, unsigned short, 
                 unsigned short, unsigned short );
 };
@@ -157,6 +239,8 @@ int STATE::load ( std::string path ) {
     file.ignore ();
     file.read ((char*) & sample_rate, 8);
     file.ignore ();
+    file >> Frase;
+    file.ignore ();
     // std::cout << "get_basic\n";
     resize_buff ( Lenth_F,true );
     // std::cout << "set_buff\n";
@@ -210,29 +294,30 @@ int STATE::save ( std::string path , bool forze ) {
 
     char* lenF = (char*) & Lenth_F;
     for (char i = 0; i < 8; i++) { file.put(lenF[i]); }
-    file << "\n";
+    file << std::endl;
 
     char* bpmC = (char*) & bpm;
     for (char i = 0; i < 8; i++) { file.put(bpmC[i]); }
-    file << "\n";
+    file << std::endl;
 
     char* samp = (char*) & sample_rate;
     for (char i = 0; i < 8; i++) { file.put(samp[i]); }
+    file << std::endl;
 
-    file << "\n";
+    file << Frase << std::endl;
 
     for ( size_t i = 0; i < Lenth_F; i++ ) {
         char* f = (char*) & Frequenze[i];
         for (char i = 0; i < 2; i++) { file.put(f[i]); }
     }
 
-    file << "\n";
+    file << std::endl;
 
     for ( size_t i = 0; i < Lenth_F; i++ ) {
         char* f = (char*) & Intensita[i];
         for (char i = 0; i < 2; i++) { file.put(f[i]); } 
     }
-    file << "\n";
+    file << std::endl;
 
     for ( size_t i = 0; i < Lenth_F*2; i++ ) {
         char* f = (char*) & Lunghezze[i];
