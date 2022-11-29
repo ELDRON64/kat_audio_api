@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #define punteggiatura "-_ ,.;:!?\0"
 // #define vocali "aàeèiìoòuùAÀEÈIÌOÒUÙ"
 #define vocali "aeiouAEIOU"
@@ -14,16 +15,19 @@ enum language {
     JAP,
     ONE
 };
-// the linked list that contains the sillab it's position and it's next and previous if any
-struct sillaba {
-    sillaba *previous;
-    char* _sillaba;
-    // 1: begin
-    // 2: end
-    // 3: middle
-    char _sillaba_type;
-    sillaba *next;
-} sillaba_default = {nullptr,nullptr,0,nullptr };
+enum pos {
+    INIZIO,
+    META,
+    FINE,
+    MONO
+};
+
+// struct that contains all the sillables metadata
+struct sillaba{
+    char* sillaba;
+    pos pos_sillaba;
+    int pos_accento; 
+};
 
 // this class thakes as arguments a frase and language ad does the sillabels division of the insert frase in the specified language
 class sillabator
@@ -36,7 +40,8 @@ private:
     // the specified language
     language current_lang;
     // the root of the sillaba list
-    sillaba  sillabe_root;
+    sillaba* sillabe_root;
+    size_t   n_sillabe;
 
     // utility
     /**
@@ -102,6 +107,8 @@ private:
      * @return frase1
      */
     static char*  copy     ( char* &frase );
+        char*   copy_chars ( char* start_ptr, int len );
+
 
     // sillabators
 
@@ -134,7 +141,7 @@ private:
      * @brief wrappes the sillabated_frase into a sillaba linked list
      * 
      */
-    void   link_sil ( );
+    void wrapper ( char* frase_sillabata );
 
 public:
     /**
@@ -218,6 +225,12 @@ public:
      * @return char* 
      */
     char*    get_frase_s ( ) { return frase_sillabata; }
+    /**
+     * @brief Get the number of sillables
+     * 
+     * @return size_t 
+     */
+    size_t   get_depth   ( ) { return n_sillabe; }
 };
 
 char*  sillabator::clean_f  ( char* &frase ) {
@@ -296,18 +309,73 @@ char*  sillabator::copy     ( char* &frase ) {
     for (size_t i = 0; i < len(frase); i++) { frase1[i] = frase[i]; }
     return frase1;
 }
-void   sillabator::link_sil ( ) {
-    sillaba new_root;
-    char* _curr_sillaba = (char*)"";
-    bool inizio = true;
-    bool fine = false;
-    int i = 0;
-
-    // tokenizzo this.frase_Sillabata ogni -/_ divido
-    // sposto i token e le loro proprietà nel new_root e succesivi 
-    while ( frase[i] != '\0') {
-        /* code */
+char*  sillabator::copy_chars ( char* start_ptr, int len ) {
+    char* frase = (char*) calloc ( len, sizeof(char) );
+    for (int i = 0; i < len; ++i) {
+        frase[i] = start_ptr[i];
     }
+    return frase;
+}
+void sillabator::wrapper ( char* frase_sillabata ) {
+    int _n_sillabe = 1; 
+    int i = 0;
+    while ( frase_sillabata[i] != '\0') { 
+        if ( frase_sillabata[i] == '-' || frase_sillabata[i] == '_') { _n_sillabe ++; }
+        i++; 
+    }
+    sillabe_root = new sillaba[_n_sillabe];
+    // std::cout << "_n_sillabe: " << _n_sillabe << "\n";
+
+    i = 0;
+    int _curr_sill = 0;
+    char* _curr_string_pointer = frase_sillabata;
+    // std::cout << "strat sillabating\n" << frase_sillabata << "\n";
+    int _delta_i = 0;
+
+    // save the char part
+    while ( frase_sillabata[i] != '\0') {
+        if ( frase_sillabata[i] == '-' || frase_sillabata[i] == '_') {
+            //std::cout << "trovata sillaba " << i << "\n";
+            sillabe_root[_curr_sill].sillaba = copy_chars (_curr_string_pointer,_delta_i );
+            _curr_sill ++;
+            _delta_i = -1;
+            _curr_string_pointer = frase_sillabata+i+1;
+        } else if ( frase_sillabata[i+1] == '\0' ) {
+            sillabe_root[_curr_sill].sillaba = copy_chars (_curr_string_pointer,_delta_i+1 );
+        }
+
+        _delta_i++;
+        i++;
+    }
+
+    i = 0;
+    bool inizio = true;
+    _curr_sill = 0;
+    // save the position
+    while ( frase_sillabata[i] != '\0') {
+        if ( frase_sillabata[i] == '-' ) {
+            if ( inizio ) {
+                sillabe_root[_curr_sill].pos_sillaba = INIZIO;
+            } else {
+                sillabe_root[_curr_sill].pos_sillaba = META;
+            }
+            inizio = false;
+
+            _curr_sill++;
+        } else if ( frase_sillabata[i] == '_' || frase_sillabata[i+1] == '\0' ) {
+            if ( inizio ) {
+                sillabe_root[_curr_sill].pos_sillaba = MONO;
+            } else {
+                sillabe_root[_curr_sill].pos_sillaba = FINE;
+            }
+            inizio = true;
+
+            _curr_sill++;
+        }
+        i++;
+    }
+
+    this->n_sillabe =_n_sillabe;
 }
 
 void sillabator::change_lang  ( language lang ) {
@@ -325,14 +393,10 @@ void sillabator::change_core  ( char* frase, language lang ) {
 }
 
 sillaba sillabator::get_sillaba ( size_t frame ) {
-    if (frame == 0) { return sillabe_root; }
-
-    sillaba sillaba_get = *sillabe_root.next;
-    for (size_t i = 0; i < frame - 1; i++) {
-        sillaba_get = *sillaba_get.next;
+    if ( frame < n_sillabe ) {
+        return sillabe_root[frame];
     }
-
-    return sillaba_get;
+    return sillabe_root[0];
 }
 
 void sillabator::_sillaba () {
@@ -344,6 +408,8 @@ void sillabator::_sillaba () {
         case 2: _sillaba_jap ( ); break;
         default: _sillaba_one ( ); break;
     }
+
+    wrapper ( this->frase_sillabata );
 }
 
 void sillabator::_sillaba_one ( ) {
@@ -478,7 +544,24 @@ std::ostream& operator << (std::ostream& os, sillabator& dt) {
         default: os << "ONE"; break;
     }
     os << std::endl;
-    os << "sillabe: " << dt.get_frase_s();
+    os << "frase_sillabata " << dt.get_frase_s ( );
+    os << std::endl;
+    os << "sillabe: " << dt.get_depth();
+    for (size_t i = 0; i < dt.get_depth ( ); i++) {
+        os << "\n" << dt.get_sillaba ( i ).sillaba << " ";
+        switch (dt.get_sillaba ( i ).pos_sillaba)
+        {
+            case 0: os << "INIZIO"; break;
+            case 1: os << "META"; break;
+            case 2: os << "FINE"; break;
+            case 3: os << "MONO"; break;
+        
+            default: break;
+        }
+        os << " " << dt.get_sillaba ( i ).pos_accento;
+    }
+    
+
 
     return os;
 }
